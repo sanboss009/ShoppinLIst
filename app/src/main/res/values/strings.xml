@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">ShoppinLIst</string>
+    <string name="id">id</string>
+    <string name="name">name</string>
+    <string name="priority">priority</string>
+    <string name="status">status</string>
+    <string name="category">category</string>
+    <string name="collection_category">categories</string>
+    <string name="collection_item">items</string>
+</resources>
