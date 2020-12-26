@@ -143,7 +143,7 @@ public class GroupSelectionFragment extends Fragment {
             @Override
             public void onClick(View view2) {
                 dialogMain.dismiss();
-//                showCategoryPopupWindow(view2);
+                showCreateSpace(view2);
             }
         });
 //        ArrayList<String> categoryArrayList = new ArrayList<>();
@@ -167,58 +167,62 @@ public class GroupSelectionFragment extends Fragment {
 
     }
 
-//    private void showCategoryPopupWindow(final View view) {
-//        Log.d(TAG, "showing category for adding task...");
-//        LayoutInflater layoutInflater = (LayoutInflater) getActivity().getSystemService(view.getContext().LAYOUT_INFLATER_SERVICE);
-//        View popupView = layoutInflater.inflate(R.layout.create_pop_up_layout,null);
-//        int width = LinearLayout.LayoutParams.MATCH_PARENT;
-//        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
-//
-//        final Dialog dialog = new Dialog(getContext(),R.style.MaterialDialogSheet);
-//        dialog.setContentView(popupView);
-//        dialog.setCancelable(true);
-//        dialog.getWindow().setLayout(width,height);
-//        dialog.getWindow().setGravity(Gravity.CENTER);
-//        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-//        dialog.show();
-//
-//        final EditText editText = popupView.findViewById(R.id.edittext);
-//        editText.setHint("Add category");
-//        LinearLayout categoryListLayout = popupView.findViewById(R.id.category_spinner_view);
-//        categoryListLayout.setVisibility(View.GONE);
-//        Button create = popupView.findViewById(R.id.create);
-//        create.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//
-//                Log.d(TAG, "onClick: creating category ... ");
-//                Map<String,String> categoryMap = new HashMap<>();
-//                categoryMap.put(ShoppinListConstants.CONSTANT_ITEM_NAME_STRING, String.valueOf(editText.getText()));
-//                categoryMap.put(ShoppinListConstants.CONSTANT_ITEM_PRIORITY_STRING,String.valueOf(categories.size()+1));
-//                categoryMap.put(ShoppinListConstants.CONSTANT_ITEM_STATUS_STRING,ShoppinListConstants.CONSTANT_ITEM_STATUS_ACTIVE_STRING);
-//                categoryMap.put(ShoppinListConstants.CONSTANT_GROUP_ID_STRING, groupId);
-//
-//                if(!String.valueOf(editText.getText()).replace(" ","").equals("")) {
-//                    FirebaseFirestore addCategoryFirestore = FirebaseFirestore.getInstance();
-//                    CollectionReference collectionReference = addCategoryFirestore.collection(ShoppinListConstants.CONSTANT_COLLECTION_CATEGORY_STRING);
-//                    collectionReference.add(categoryMap);
-//                    listenerRegistration =collectionReference.addSnapshotListener(MainActivity.this, new EventListener<QuerySnapshot>() {
-//                        @Override
-//                        public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
-//                            if(isInternetAvailable()){
-//                                Toast.makeText(getApplicationContext(), "Category created Successfully", Toast.LENGTH_SHORT).show();
-//                            }else{
-//                                Toast.makeText(getApplicationContext(), "Category created. Sync Failed", Toast.LENGTH_SHORT).show();
-//                            }
-//                            dialog.dismiss();
-//                            getCategoriesFromDB(true);
-//                        }
-//                    });
-//                }
-//
-//            }
-//        });
-//    }
+    private void showCreateSpace(final View view) {
+        Log.d(TAG, "showing space creating popup ...");
+        LayoutInflater layoutInflater = (LayoutInflater) getActivity().getSystemService(view.getContext().LAYOUT_INFLATER_SERVICE);
+        View popupView = layoutInflater.inflate(R.layout.create_pop_up_layout,null);
+        int width = LinearLayout.LayoutParams.MATCH_PARENT;
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+
+        final Dialog dialog = new Dialog(getContext(),R.style.MaterialDialogSheet);
+        dialog.setContentView(popupView);
+        dialog.setCancelable(true);
+        dialog.getWindow().setLayout(width,height);
+        dialog.getWindow().setGravity(Gravity.CENTER);
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        dialog.show();
+        popupView.findViewById(R.id.craate_category_btn).setVisibility(View.GONE);
+        final EditText editText = popupView.findViewById(R.id.edittext);
+        editText.setHint("Space name");
+        LinearLayout categoryListLayout = popupView.findViewById(R.id.category_spinner_view);
+        categoryListLayout.setVisibility(View.GONE);
+        Button create = popupView.findViewById(R.id.create);
+        create.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d(TAG, "onClick: creating group ... ");
+                Map<String,String> groupMap = new HashMap<>();
+                groupMap.put(ShoppinListConstants.CONSTANT_ITEM_NAME_STRING, String.valueOf(editText.getText()));
+
+                if(!String.valueOf(editText.getText()).replace(" ","").equals("")) {
+                    FirebaseFirestore addGroupFirestore = FirebaseFirestore.getInstance();
+                    CollectionReference collectionReference = addGroupFirestore.collection(ShoppinListConstants.CONSTANT_GROUPS_STRING);
+                    collectionReference
+                            .add(groupMap)
+                            .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                                @Override
+                                public void onSuccess(DocumentReference documentReference) {
+                                    if(isInternetAvailable()){
+                                        Toast.makeText(getContext(), "Group created Successfully", Toast.LENGTH_SHORT).show();
+                                        String groupId = documentReference.getId();
+                                        createUerGroup(groupId,editText.getText().toString());
+                                    }else{
+                                        Toast.makeText(getContext(), "Group created. Sync Failed", Toast.LENGTH_SHORT).show();
+                                    }
+                                    dialog.dismiss();
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Toast.makeText(getContext(), "Group created. Sync Failed", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                }
+            }
+        });
+
+    }
 
     void showGroups(){
         if (isRemoveRegistration) {
@@ -284,6 +288,21 @@ public class GroupSelectionFragment extends Fragment {
                         }
                     }
                 });
+    }
+
+
+
+    public boolean isInternetAvailable() {
+        try {
+            ConnectivityManager cm = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo info = cm.getActiveNetworkInfo();
+            if (info == null) return false;
+            NetworkInfo.State network = info.getState();
+            return (network == NetworkInfo.State.CONNECTED || network == NetworkInfo.State.CONNECTING);
+
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 }

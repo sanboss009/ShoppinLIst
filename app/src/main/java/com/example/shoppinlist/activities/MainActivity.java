@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
     private Dialog dialogMain;
     private ArrayAdapter spinnerAdapter;
     private ListenerRegistration listenerRegistration;
-    String groupId ;
+    String groupId ="";
     String TAG = ShoppinListConstants.CONSTANT_LOG_TAG;
     boolean isUserLoggedIn = true;
     @Override
@@ -102,6 +102,12 @@ public class MainActivity extends AppCompatActivity {
                 groupId = intent.getExtras().getString(ShoppinListConstants.CONSTANT_GROUP_ID_STRING);
             }
         }
+
+        if (groupId.equals("")) {
+            SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(ShoppinListConstants.CONSTANT_SHOPPING_LIST_SHARED_PREF, MODE_PRIVATE);
+            groupId = sharedPreferences.getString(ShoppinListConstants.CONSTANT_GROUP_ID_STRING, "");
+        }
+
         FirebaseApp.initializeApp(getApplicationContext());
         listenerRegistration = null;
         if(isUserLoggedIn)
@@ -360,6 +366,7 @@ public class MainActivity extends AppCompatActivity {
 
         MaterialButton switchSpace = popupView.findViewById(R.id.switch_space_button);
         final MaterialButton logoutButton = popupView.findViewById(R.id.logout_button);
+        final MaterialButton shareSpace = popupView.findViewById(R.id.share_space_button);
 
         switchSpace.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -377,6 +384,13 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 showLogOutpopup();
                 dialog.dismiss();
+            }
+        });
+
+        shareSpace.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                shareSpaceId();
             }
         });
     }
@@ -410,6 +424,15 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .show();
+    }
+
+    void shareSpaceId(){
+        Intent sendIntent = new Intent();
+        sendIntent.setAction(Intent.ACTION_SEND);
+        sendIntent.putExtra(Intent.EXTRA_TEXT, "Welcome to my Space\n Use " + groupId + " to login to the space !!");
+        sendIntent.setType("text/plain");
+        Intent shareIntent = Intent.createChooser(sendIntent, null);
+        startActivity(shareIntent);
     }
 
     @Override
